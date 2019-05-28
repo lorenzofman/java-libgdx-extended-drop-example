@@ -32,6 +32,7 @@ public class GameScreen implements Screen {
 	Array<Rectangle> raindrops;
 	long lastDropTime;
 	int dropsGathered;
+	int dropsMissed;
 	
 	public GameScreen(final Drop passed_game) {
 		game = passed_game; 
@@ -79,6 +80,7 @@ public class GameScreen implements Screen {
 		game.batch.setProjectionMatrix(camera.combined);
 		game.batch.begin();
 		game.font.draw(game.batch, "Drops Collected: " + dropsGathered, 0, 400);
+		game.font.draw(game.batch, "Drops Missed: " + dropsMissed, 0, 300);
 		// Draw the bucket and all the drops.
 		game.batch.draw(bucketImage, bucket.x, bucket.y);
 		for (Rectangle raindrop: raindrops) {
@@ -112,8 +114,10 @@ public class GameScreen implements Screen {
 		while (iter.hasNext()) {
 			Rectangle raindrop = iter.next();
 			raindrop.y -= 200 * Gdx.graphics.getDeltaTime();
-			if (raindrop.y + raindrop.height < 0) 
+			if (raindrop.y + raindrop.height < 0) {
 				iter.remove();
+				dropsMissed++;
+			}
 			if (raindrop.overlaps(bucket)) {
 				dropsGathered++;
 				dropSound.play();
