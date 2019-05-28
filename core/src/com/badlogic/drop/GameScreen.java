@@ -1,6 +1,7 @@
 package com.badlogic.drop;
 
 import java.util.Iterator;
+import java.util.ArrayList;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Keys;
@@ -29,16 +30,18 @@ public class GameScreen implements Screen {
 	SpriteBatch batch;
 	Rectangle bucket;
 	Vector3 touchPos;
-	Array<Rectangle> raindrops;
+	Array<DropSprite> raindrops;
 	long lastDropTime;
 	int dropsGathered;
 	int dropsMissed;
-	
+	ArrayList<Texture> availableDropSprites;
 	public GameScreen(final Drop passed_game) {
 		game = passed_game; 
-		
+		availableDropSprites = new ArrayList<Texture>();
 		// Load images, 64px each
-		dropImage = new Texture(Gdx.files.internal("droplet.png"));
+		availableDropSprites.add(new Texture(Gdx.files.internal("droplet.png")));
+		availableDropSprites.add(new Texture(Gdx.files.internal("dropletFire.png")));
+		availableDropSprites.add(new Texture(Gdx.files.internal("ice.png")));
 		bucketImage = new Texture(Gdx.files.internal("bucket.png"));
 		
 		// Load the drop sfx and the rain background music
@@ -64,7 +67,7 @@ public class GameScreen implements Screen {
 		bucket.height = 64;
 		
 		// Create Raindrops and spawn the first one.
-		raindrops = new Array<Rectangle>();
+		raindrops = new Array<DropSprite>();
 		spawnRaindrop();
 	}
 
@@ -83,8 +86,8 @@ public class GameScreen implements Screen {
 		game.font.draw(game.batch, "Drops Missed: " + dropsMissed, 0, 300);
 		// Draw the bucket and all the drops.
 		game.batch.draw(bucketImage, bucket.x, bucket.y);
-		for (Rectangle raindrop: raindrops) {
-			game.batch.draw(dropImage, raindrop.x, raindrop.y);
+		for (DropSprite raindrop: raindrops) {
+			game.batch.draw(availableDropSprites.get(raindrop.spriteIdx), raindrop.rectangle.x, raindrop.rectangle.y);
 		}
 		game.batch.end();
 		
@@ -110,15 +113,15 @@ public class GameScreen implements Screen {
 			spawnRaindrop();
 		
 		// Update all the raindrops
-		Iterator<Rectangle> iter = raindrops.iterator();
+		Iterator<DropSprite> iter = raindrops.iterator();
 		while (iter.hasNext()) {
-			Rectangle raindrop = iter.next();
-			raindrop.y -= 200 * Gdx.graphics.getDeltaTime();
-			if (raindrop.y + raindrop.height < 0) {
+			DropSprite raindrop = iter.next();
+			raindrop.rectangle.y -= 200 * Gdx.graphics.getDeltaTime();
+			if (raindrop.rectangle.y + raindrop.rectangle.height < 0) {
 				iter.remove();
 				dropsMissed++;
 			}
-			if (raindrop.overlaps(bucket)) {
+			if (raindrop.rectangle.overlaps(bucket)) {
 				dropsGathered++;
 				dropSound.play();
 				iter.remove();
@@ -127,11 +130,12 @@ public class GameScreen implements Screen {
 	}
 	
 	private void spawnRaindrop() {
-		Rectangle raindrop = new Rectangle();
-		raindrop.x = MathUtils.random(0, 800-64);
-		raindrop.y = 480;
-		raindrop.width = 64;
-		raindrop.height = 64;
+		DropSprite raindrop = new DropSprite();
+		raindrop.spriteIdx = MathUtils.random(0,availableDropSprites.size() - 1);
+		raindrop.rectangle.x = MathUtils.random(0, 800-64);
+		raindrop.rectangle.y = 480;
+		raindrop.rectangle.width = 64;
+		raindrop.rectangle.height = 64;
 		raindrops.add(raindrop);
 		lastDropTime = TimeUtils.nanoTime();
 	}
